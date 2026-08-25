@@ -85,3 +85,44 @@ describe('addBusinessHours', () => {
     expect(result.getTime()).toBe(expected.getTime());
   });
 });
+
+
+import { businessMinutesBetween } from '../../src/services/sla/businessHours';
+
+describe('businessMinutesBetween', () => {
+  it('is the inverse of addBusinessHours for a same-day case', () => {
+    const start = istToUtc('2026-08-24T10:00:00');
+    const deadline = addBusinessHours(start, 3, [], config);
+    const minutes = businessMinutesBetween(start, deadline, [], config);
+    expect(minutes).toBe(3 * 60);
+  });
+
+  it('is the inverse of addBusinessHours across a weekend', () => {
+    const start = istToUtc('2026-08-21T17:00:00'); // Friday
+    const deadline = addBusinessHours(start, 4, [], config);
+    const minutes = businessMinutesBetween(start, deadline, [], config);
+    expect(minutes).toBe(4 * 60);
+  });
+
+  it('is the inverse of addBusinessHours across a holiday', () => {
+    const start = istToUtc('2026-08-21T17:00:00'); // Friday
+    const monday = new Date('2026-08-24T00:00:00.000Z');
+    const deadline = addBusinessHours(start, 4, [monday], config);
+    const minutes = businessMinutesBetween(start, deadline, [monday], config);
+    expect(minutes).toBe(4 * 60);
+  });
+
+  it('returns negative minutes when the second timestamp is earlier', () => {
+    const later = istToUtc('2026-08-24T13:00:00');
+    const earlier = istToUtc('2026-08-24T10:00:00');
+    const minutes = businessMinutesBetween(later, earlier, [], config);
+    expect(minutes).toBe(-3 * 60);
+  });
+
+  it('returns zero business minutes entirely within a weekend', () => {
+    const satMorning = istToUtc('2026-08-22T08:00:00');
+    const satEvening = istToUtc('2026-08-22T20:00:00');
+    const minutes = businessMinutesBetween(satMorning, satEvening, [], config);
+    expect(minutes).toBe(0);
+  });
+});

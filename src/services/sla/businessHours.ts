@@ -80,3 +80,55 @@ export function addBusinessHours(
 
   return current.toUTC().toJSDate();
 }
+
+/**
+ * Computes the number of business minutes that elapse between two UTC
+ * timestamps, respecting business hours, weekends, and holidays.
+ * Returns a negative value if `toUtc` is before `fromUtc`.
+ */
+export function businessMinutesBetween(
+  fromUtc: Date,
+  toUtc: Date,
+  holidayDates: Date[],
+  config: BusinessHoursConfig = defaultBusinessHoursConfig
+): number {
+  const holidaySet = toHolidaySet(holidayDates);
+
+  let start = DateTime.fromJSDate(fromUtc, { zone: 'utc' }).setZone(config.timezone);
+  let end = DateTime.fromJSDate(toUtc, { zone: 'utc' }).setZone(config.timezone);
+  let sign = 1;
+
+  if (end < start) {
+    const temp = start;
+    start = end;
+    end = temp;
+    sign = -1;
+  }
+
+  let totalMinutes = 0;
+  let cursor: DateTime = start;
+
+  while (cursor < end) {
+    if (!isBusinessDay(cursor, holidaySet)) {
+      cursor = startOfBusinessDay(cursor.plus({ days: 1 }), config);
+      continue;
+    }
+
+    const dayStart = startOfBusinessDay(cursor, config);
+    const dayEnd = endOfBusinessDay(cursor, config);
+    const segmentStart = cursor < dayStart ? dayStart : cursor;
+    const segmentEnd = end < dayEnd ? end : dayEnd;
+
+    if (segmentStart < segmentEnd) {
+      totalMinutes += segmentEnd.diff(segmentStart, 'minutes').minutes;
+    }
+
+    if (end <= dayEnd) {
+      break;
+    }
+
+    cursor = startOfBusinessDay(cursor.plus({ days: 1 }), config);
+  }
+
+  return sign * totalMinutes;
+}

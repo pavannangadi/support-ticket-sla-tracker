@@ -18,7 +18,6 @@
     "isolatedModules": true,
 
     "outDir": "dist",
-    "rootDir": "src",
 
     "noUnusedLocals": true,
     "noUnusedParameters": true,
