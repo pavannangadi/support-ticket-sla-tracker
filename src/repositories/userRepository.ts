@@ -1,6 +1,13 @@
 import { prisma } from '../db/client';
 import type { UserRole } from '../generated/prisma';
 
+export interface CreateUserInput {
+  name: string;
+  email: string;
+  password: string;
+  role: UserRole;
+}
+
 export const userRepository = {
   findMany(role?: UserRole) {
     return prisma.user.findMany({
@@ -15,5 +22,9 @@ export const userRepository = {
 
   findByEmail(email: string) {
     return prisma.user.findUnique({ where: { email } });
+  },
+
+  create(input: CreateUserInput) {
+    return prisma.user.create({ data: input });
   },
 };

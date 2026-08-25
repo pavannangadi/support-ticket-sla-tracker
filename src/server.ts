@@ -4,6 +4,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { userResolvers } from './graphql/resolvers/userResolvers';
+import { authResolvers } from './graphql/resolvers/authResolvers';
+import { createContext } from './graphql/context';
 
 const typeDefs = readFileSync(
   join(import.meta.dir, 'graphql/schema/schema.graphql'),
@@ -12,10 +14,13 @@ const typeDefs = readFileSync(
 
 const schema = makeExecutableSchema({
   typeDefs,
-  resolvers: [userResolvers],
+  resolvers: [userResolvers, authResolvers],
 });
 
-const yoga = createYoga({ schema });
+const yoga = createYoga({
+  schema,
+  context: createContext,
+});
 
 const server = createServer(yoga);
 
