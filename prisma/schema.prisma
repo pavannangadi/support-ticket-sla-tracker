@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum UserRole {
+  REPORTER
+  AGENT
+}
+
+enum SLAState {
+  ON_TRACK
+  AT_RISK
+  BREACHED
+}
+
+model User {
+  id       String   @id @default(cuid())
+  name     String
+  email    String   @unique
+  password String
+  role     UserRole
+  createdAt DateTime @default(now())
+
+  // Tickets this user reported (as a REPORTER)
+  reportedTickets Ticket[] @relation("ReportedTickets")
+
+  // Tickets this user is assigned to (as an AGENT)
+  assignedTickets Ticket[] @relation("AssignedTickets")
+
+  // Comments this user has written
+  comments Comment[]
+
+  @@index([email])
+}
+
+model Ticket {
+  id          String       @id @default(cuid())
+  title       String
+  description String
+  priority    Priority
+  status      TicketStatus @default(OPEN)
+
+  reporter   User   @relation("ReportedTickets", fields: [reporterId], references: [id])
+  reporterId String
+
+  assignee   User?   @relation("AssignedTickets", fields: [assigneeId], references: [id])
+  assigneeId String?
+
+  createdAt       DateTime  @default(now())
+  firstResponseAt DateTime?
+  resolvedAt      DateTime?
+
+  comments Comment[]
+
+  @@index([status])
+  @@index([priority])
+  @@index([assigneeId])
+  @@index([createdAt])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  ticketId String
+
+  author   User   @relation(fields: [authorId], references: [id])
+  authorId String
+
+  @@index([ticketId])
+}
+
+model Holiday {
+  id   String   @id @default(cuid())
+  date DateTime @db.Date
+  name String
+
+  @@unique([date])
+}
