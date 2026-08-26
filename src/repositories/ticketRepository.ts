@@ -8,42 +8,58 @@ export interface CreateTicketInput {
   reporterId: string;
 }
 
+const fullInclude = {
+  reporter: true,
+  assignee: true,
+  comments: { include: { author: true } },
+} as const;
+
 export const ticketRepository = {
   findById(id: string) {
     return prisma.ticket.findUnique({
       where: { id },
-      include: { reporter: true, assignee: true, comments: { include: { author: true } } },
+      include: fullInclude,
     });
   },
 
-  create(input: CreateTicketInput) {
-    return prisma.ticket.create({
-      data: input,
-      include: { reporter: true, assignee: true, comments: true },
+  async create(input: CreateTicketInput) {
+    const ticket = await prisma.ticket.create({ data: input });
+    return prisma.ticket.findUniqueOrThrow({
+      where: { id: ticket.id },
+      include: fullInclude,
     });
   },
 
-  assign(ticketId: string, assigneeId: string) {
-    return prisma.ticket.update({
+  async assign(ticketId: string, assigneeId: string) {
+    await prisma.ticket.update({
       where: { id: ticketId },
       data: { assigneeId },
-      include: { reporter: true, assignee: true, comments: true },
+    });
+    return prisma.ticket.findUniqueOrThrow({
+      where: { id: ticketId },
+      include: fullInclude,
     });
   },
 
-  updateStatus(ticketId: string, status: TicketStatus) {
-    return prisma.ticket.update({
+  async updateStatus(ticketId: string, status: TicketStatus) {
+    await prisma.ticket.update({
       where: { id: ticketId },
       data: { status },
-      include: { reporter: true, assignee: true, comments: true },
+    });
+    return prisma.ticket.findUniqueOrThrow({
+      where: { id: ticketId },
+      include: fullInclude,
     });
   },
 
-  markResolved(ticketId: string) {
-    return prisma.ticket.update({
+  async markResolved(ticketId: string) {
+    await prisma.ticket.update({
       where: { id: ticketId },
       data: { status: 'RESOLVED', resolvedAt: new Date() },
-      include: { reporter: true, assignee: true, comments: true },
+    });
+    return prisma.ticket.findUniqueOrThrow({
+      where: { id: ticketId },
+      include: fullInclude,
     });
   },
 

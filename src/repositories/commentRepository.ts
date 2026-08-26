@@ -7,9 +7,10 @@ export interface CreateCommentInput {
 }
 
 export const commentRepository = {
-  create(input: CreateCommentInput) {
-    return prisma.comment.create({
-      data: input,
+  async create(input: CreateCommentInput) {
+    const comment = await prisma.comment.create({ data: input });
+    return prisma.comment.findUniqueOrThrow({
+      where: { id: comment.id },
       include: { author: true },
     });
   },

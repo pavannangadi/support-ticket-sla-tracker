@@ -2,8 +2,11 @@ import type { Priority, TicketStatus, Ticket as PrismaTicket } from '../../gener
 import { ticketRepository } from '../../repositories/ticketRepository';
 import { userRepository } from '../../repositories/userRepository';
 import { holidayRepository } from '../../repositories/holidayRepository';
+import { commentRepository } from '../../repositories/commentRepository';
 import { validateCreateTicketInput } from '../../validation/ticketValidation';
+import { validateCommentInput } from '../../validation/commentValidation';
 import { assertValidTransition } from '../../services/ticket/statusTransitions';
+import { isFirstResponse } from '../../services/ticket/firstResponse';
 import { calculateSLA } from '../../services/sla/calculateSLA';
 import { requireAuth, requireRole } from '../../services/auth/authorize';
 import { createAppError } from '../errors';
@@ -27,6 +30,11 @@ interface ChangeStatusArgs {
 
 interface ResolveTicketArgs {
   ticketId: string;
+}
+
+interface AddCommentArgs {
+  ticketId: string;
+  content: string;
 }
 
 async function findTicketOrThrow(id: string) {
@@ -64,6 +72,10 @@ export const ticketResolvers = {
         resolutionRemainingMinutes: Math.round(result.resolutionRemainingMinutes),
       };
     },
+  },
+
+  Comment: {
+    createdAt: (parent: { createdAt: Date }) => parent.createdAt.toISOString(),
   },
 
   Query: {
@@ -114,6 +126,31 @@ export const ticketResolvers = {
       assertValidTransition(ticket.status, 'RESOLVED');
 
       return ticketRepository.markResolved(args.ticketId);
+    },
+
+    addComment: async (_parent: unknown, args: AddCommentArgs, context: GraphQLContext) => {
+      const user = requireAuth(context);
+      validateCommentInput(args);
+
+      const ticket = await findTicketOrThrow(args.ticketId);
+
+      const comment = await commentRepository.create({
+        ticketId: args.ticketId,
+        authorId: user.userId,
+        content: args.content,
+      });
+
+      const shouldRecordFirstResponse = isFirstResponse({
+        reporterId: ticket.reporterId,
+        authorId: user.userId,
+        firstResponseAt: ticket.firstResponseAt,
+      });
+
+      if (shouldRecordFirstResponse) {
+        await ticketRepository.setFirstResponseAt(args.ticketId, comment.createdAt);
+      }
+
+      return comment;
     },
   },
 };
