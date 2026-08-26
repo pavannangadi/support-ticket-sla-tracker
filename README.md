@@ -270,3 +270,7 @@ query {
 - **Recurring holidays** — currently each holiday is a single date; recurring annual holidays would need a separate recurrence rule
 - **Live-updating countdown** on the frontend (currently requires a manual refresh to see updated remaining-time values)
 - **CI pipeline** running typecheck + tests on every push
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
