@@ -6,6 +6,8 @@ A support ticket tracking system with automatic SLA (Service Level Agreement) de
 
 Users (reporters) can raise support tickets. Agents can assign, work on, and resolve tickets. Every ticket automatically gets a first-response deadline and a resolution deadline, calculated purely in business hours (Mon–Fri, 09:00–18:00, configurable timezone). Each SLA clock tracks whether it's `ON_TRACK`, `AT_RISK`, or `BREACHED`, and freezes permanently once the relevant event (first response / resolution) actually happens.
 
+For a reviewer-focused summary of the implementation, edge cases, tests, and tradeoffs, read the [Implementation Walkthrough](WALKTHROUGH.md).
+
 ## Tech Stack
 
 - **Runtime/Language:** Bun + TypeScript (strict mode, no `any`)
