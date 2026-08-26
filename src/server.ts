@@ -22,6 +22,10 @@ const schema = makeExecutableSchema({
 const yoga = createYoga({
   schema,
   context: createContext,
+  cors: {
+    origin: ['http://localhost:5173'],
+    credentials: true,
+  },
 });
 
 const server = createServer(yoga);
