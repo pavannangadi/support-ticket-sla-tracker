@@ -18,6 +18,16 @@ enum UserRole {
   AGENT
 }
 
+enum TicketSortField {
+  CREATED_AT
+  PRIORITY
+}
+
+enum SortOrder {
+  ASC
+  DESC
+}
+
 enum SLAState {
   ON_TRACK
   AT_RISK
@@ -97,6 +107,8 @@ type Query {
     priority: Priority
     assigneeId: ID
     slaState: SLAState
+    sortBy: TicketSortField
+    sortOrder: SortOrder
     take: Int
     cursor: String
   ): TicketConnection!

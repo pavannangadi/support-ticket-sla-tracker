@@ -10,6 +10,7 @@ export interface TicketFilters {
 export interface PaginatedTicketsInput extends TicketFilters {
   take: number;
   cursor?: string;
+  sortOrder?: 'asc' | 'desc';
 }
 
 const fullInclude = {
@@ -26,10 +27,12 @@ export const ticketQueryRepository = {
       assigneeId: input.assigneeId,
     };
 
+    const order = input.sortOrder ?? 'desc';
+
     const tickets = await prisma.ticket.findMany({
       where,
       include: fullInclude,
-      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      orderBy: [{ createdAt: order }, { id: order }],
       take: input.take + 1,
       ...(input.cursor ? { cursor: { id: input.cursor }, skip: 1 } : {}),
     });
@@ -39,5 +42,16 @@ export const ticketQueryRepository = {
     const endCursor = nodes.length > 0 ? nodes[nodes.length - 1]?.id ?? null : null;
 
     return { nodes, hasNextPage, endCursor };
+  },
+
+  async findManyUnpaginated(filters: TicketFilters) {
+    return prisma.ticket.findMany({
+      where: {
+        status: filters.status,
+        priority: filters.priority,
+        assigneeId: filters.assigneeId,
+      },
+      include: fullInclude,
+    });
   },
 };
