@@ -116,6 +116,14 @@ export const ticketResolvers = {
       const ticket = await findTicketOrThrow(args.ticketId);
       assertValidTransition(ticket.status, args.status);
 
+      if (args.status === 'RESOLVED') {
+        return ticketRepository.markResolved(args.ticketId);
+      }
+
+      if (args.status === 'OPEN' && (ticket.status === 'RESOLVED' || ticket.status === 'CLOSED')) {
+        return ticketRepository.reopen(args.ticketId);
+      }
+
       return ticketRepository.updateStatus(args.ticketId, args.status);
     },
 

@@ -116,4 +116,30 @@ describe('Integration: ticket creation, comments, and SLA persistence', () => {
     expect(allComments[0]?.authorId).toBe(reporter.id);
     expect(allComments[1]?.authorId).toBe(agent.id);
   });
+
+  it('markResolved always stamps resolvedAt, and reopen clears it', async () => {
+    const reporter = await getOrCreateTestUser(
+      'integration-reporter@example.com',
+      'Integration Reporter',
+      'REPORTER'
+    );
+
+    const ticket = await ticketRepository.create({
+      title: TEST_MARKER,
+      description: 'Verifying resolvedAt stamping behavior.',
+      priority: 'LOW',
+      reporterId: reporter.id,
+    });
+    createdTicketIds.push(ticket.id);
+
+    expect(ticket.resolvedAt).toBeNull();
+
+    const resolved = await ticketRepository.markResolved(ticket.id);
+    expect(resolved.status).toBe('RESOLVED');
+    expect(resolved.resolvedAt).not.toBeNull();
+
+    const reopened = await ticketRepository.reopen(ticket.id);
+    expect(reopened.status).toBe('OPEN');
+    expect(reopened.resolvedAt).toBeNull();
+  });
 });
