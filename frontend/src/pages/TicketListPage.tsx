@@ -4,9 +4,28 @@ import { graphqlRequest, ApiError } from '../api/client';
 import { SLABadge } from '../components/SLABadge';
 import type { TicketConnection, TicketStatus, Priority, SLAState } from '../api/types';
 
+type SortField = 'CREATED_AT' | 'PRIORITY';
+type SortOrder = 'ASC' | 'DESC';
+
 const TICKETS_QUERY = `
-  query Tickets($status: TicketStatus, $priority: Priority, $slaState: SLAState, $take: Int, $cursor: String) {
-    tickets(status: $status, priority: $priority, slaState: $slaState, take: $take, cursor: $cursor) {
+  query Tickets(
+    $status: TicketStatus
+    $priority: Priority
+    $slaState: SLAState
+    $sortBy: TicketSortField
+    $sortOrder: SortOrder
+    $take: Int
+    $cursor: String
+  ) {
+    tickets(
+      status: $status
+      priority: $priority
+      slaState: $slaState
+      sortBy: $sortBy
+      sortOrder: $sortOrder
+      take: $take
+      cursor: $cursor
+    ) {
       nodes {
         id
         title
@@ -38,6 +57,8 @@ export function TicketListPage() {
   const [statusFilter, setStatusFilter] = useState<TicketStatus | ''>('');
   const [priorityFilter, setPriorityFilter] = useState<Priority | ''>('');
   const [slaFilter, setSlaFilter] = useState<SLAState | ''>('');
+  const [sortBy, setSortBy] = useState<SortField>('CREATED_AT');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('DESC');
   const [cursorStack, setCursorStack] = useState<(string | null)[]>([null]);
   const [pageIndex, setPageIndex] = useState(0);
 
@@ -49,6 +70,8 @@ export function TicketListPage() {
         status: statusFilter || undefined,
         priority: priorityFilter || undefined,
         slaState: slaFilter || undefined,
+        sortBy,
+        sortOrder,
         take: PAGE_SIZE,
         cursor: cursorStack[pageIndex] ?? undefined,
       });
@@ -58,7 +81,7 @@ export function TicketListPage() {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, priorityFilter, slaFilter, cursorStack, pageIndex]);
+  }, [statusFilter, priorityFilter, slaFilter, sortBy, sortOrder, cursorStack, pageIndex]);
 
   useEffect(() => {
     fetchTickets();
@@ -123,6 +146,28 @@ export function TicketListPage() {
           <option value="ON_TRACK">On Track</option>
           <option value="AT_RISK">At Risk</option>
           <option value="BREACHED">Breached</option>
+        </select>
+
+        <select
+          value={sortBy}
+          onChange={(e) => {
+            setSortBy(e.target.value as SortField);
+            resetPagination();
+          }}
+        >
+          <option value="CREATED_AT">Sort: Created Date</option>
+          <option value="PRIORITY">Sort: Priority</option>
+        </select>
+
+        <select
+          value={sortOrder}
+          onChange={(e) => {
+            setSortOrder(e.target.value as SortOrder);
+            resetPagination();
+          }}
+        >
+          <option value="DESC">Descending</option>
+          <option value="ASC">Ascending</option>
         </select>
       </div>
 
