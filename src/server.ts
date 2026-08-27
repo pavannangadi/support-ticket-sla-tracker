@@ -7,6 +7,7 @@ import { userResolvers } from './graphql/resolvers/userResolvers';
 import { authResolvers } from './graphql/resolvers/authResolvers';
 import { ticketResolvers } from './graphql/resolvers/ticketResolvers';
 import { ticketQueryResolvers } from './graphql/resolvers/ticketQueryResolvers';
+import { holidayResolvers } from './graphql/resolvers/holidayResolvers';
 import { createContext } from './graphql/context';
 
 const typeDefs = readFileSync(
@@ -16,7 +17,7 @@ const typeDefs = readFileSync(
 
 const schema = makeExecutableSchema({
   typeDefs,
-  resolvers: [userResolvers, authResolvers, ticketResolvers, ticketQueryResolvers],
+  resolvers: [userResolvers, authResolvers, ticketResolvers, ticketQueryResolvers, holidayResolvers],
 });
 
 const yoga = createYoga({
